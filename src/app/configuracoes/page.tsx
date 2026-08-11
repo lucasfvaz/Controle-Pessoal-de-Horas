@@ -14,6 +14,11 @@ import {
   useToast,
 } from "@/components/ui";
 import {
+  PageTransition,
+  RevealStagger,
+  ContentFade,
+} from "@/components/motion";
+import {
   formatDateBR,
   formatMinutesLong,
   WEEKDAY_NAMES,
@@ -111,7 +116,7 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="overflow-hidden p-0">
+    <Card interactive={false} className="overflow-hidden p-0">
       <button
         type="button"
         aria-expanded={open}
@@ -420,10 +425,17 @@ export default function ConfiguracoesPage() {
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  if (!form) return <SettingsSkeleton />;
+  if (!form) {
+    return (
+      <PageTransition>
+        <SettingsSkeleton />
+      </PageTransition>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <PageTransition className="space-y-6">
+      <ContentFade className="space-y-6">
       <PageHeader
         title="Configurações"
         description="Defina jornada, horários padrão e limites de compensação. Nada fica fixo no código."
@@ -446,7 +458,7 @@ export default function ConfiguracoesPage() {
         }
       />
 
-      <div className="space-y-3">
+      <RevealStagger className="space-y-3">
         <AccordionSection
           id="jornada"
           icon={Clock}
@@ -675,7 +687,7 @@ export default function ConfiguracoesPage() {
             </div>
           )}
         </AccordionSection>
-      </div>
+      </RevealStagger>
 
       {dirty && !autoSave ? (
         <div className="sticky bottom-20 z-10 flex justify-end lg:bottom-6">
@@ -768,6 +780,7 @@ export default function ConfiguracoesPage() {
           {deleteHoliday ? ` (${formatDateBR(deleteHoliday.date)})` : ""}?
         </p>
       </Modal>
-    </div>
+      </ContentFade>
+    </PageTransition>
   );
 }

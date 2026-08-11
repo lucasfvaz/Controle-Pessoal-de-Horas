@@ -13,6 +13,11 @@ import {
   Skeleton,
 } from "@/components/ui";
 import {
+  PageTransition,
+  ContentFade,
+} from "@/components/motion";
+import { useCountUp } from "@/hooks/use-count-up";
+import {
   formatDateBR,
   formatMinutesLong,
   getWeekStart,
@@ -203,8 +208,12 @@ export default function HistoricoPage() {
     };
   }, [entries]);
 
+  const countAnim = useCountUp(summary.count);
+  const workedAnim = useCountUp(summary.totalWorked);
+  const balanceAnim = useCountUp(summary.totalBalance);
+
   return (
-    <div className="space-y-6">
+    <PageTransition className="space-y-6">
       <PageHeader
         title="Histórico"
         description="Consulte e filtre registros de ponto."
@@ -280,14 +289,14 @@ export default function HistoricoPage() {
       {/* Summary */}
       <Card variant="glass" className="animate-slide-up">
         <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryItem label="Total de registros" value={String(summary.count)} />
+          <SummaryItem label="Total de registros" value={String(countAnim)} />
           <SummaryItem
             label="Horas trabalhadas"
-            value={formatMinutesLong(summary.totalWorked)}
+            value={formatMinutesLong(workedAnim)}
           />
           <SummaryItem
             label="Saldo acumulado"
-            value={formatMinutesLong(summary.totalBalance, true)}
+            value={formatMinutesLong(balanceAnim, true)}
             tone={
               summary.totalBalance >= 0
                 ? "text-[color:var(--status-success)]"
@@ -308,7 +317,7 @@ export default function HistoricoPage() {
           onAction={() => router.push("/ponto")}
         />
       ) : (
-        <>
+        <ContentFade>
           {/* Desktop table */}
           <Card className="hidden overflow-hidden p-0 lg:block">
             <div className="max-h-[70vh] overflow-auto">
@@ -362,7 +371,7 @@ export default function HistoricoPage() {
                   {pageItems.map((e) => (
                     <tr
                       key={e.id}
-                      className="border-b border-[color:var(--border)] transition-colors hover:bg-[color:var(--brand-soft)]/50"
+                      className="table-row-interactive border-b border-[color:var(--border)]"
                     >
                       <td className="whitespace-nowrap px-4 py-3 font-medium">
                         {formatDateBR(e.date)}
@@ -475,9 +484,9 @@ export default function HistoricoPage() {
               </Button>
             ) : null}
           </div>
-        </>
+        </ContentFade>
       )}
-    </div>
+    </PageTransition>
   );
 }
 

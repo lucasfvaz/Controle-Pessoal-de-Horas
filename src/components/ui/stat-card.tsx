@@ -31,7 +31,7 @@ export function StatCard({
   };
 
   return (
-    <Card className={cn("animate-slide-up", className)} style={style}>
+    <Card className={className} style={style}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--text-muted)] transition-colors">
           {label}

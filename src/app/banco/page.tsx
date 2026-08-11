@@ -11,6 +11,13 @@ import {
   Skeleton,
   Tabs,
 } from "@/components/ui";
+import {
+  PageTransition,
+  Reveal,
+  RevealStagger,
+  ContentFade,
+} from "@/components/motion";
+import { useCountUp } from "@/hooks/use-count-up";
 import { formatDateBR, formatMinutesLong } from "@/domain/time";
 import { cn } from "@/lib/utils";
 import {
@@ -43,30 +50,6 @@ type BankData = {
 };
 
 type Period = "30" | "90" | "all";
-
-function useCountUp(target: number, duration = 900) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setValue(target);
-      return;
-    }
-    let frame = 0;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(Math.round(target * eased));
-      if (t < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
-
-  return value;
-}
 
 function Sparkline({ points, positive }: { points: number[]; positive: boolean }) {
   if (points.length < 2) {
@@ -219,7 +202,13 @@ export default function BancoPage() {
     [data]
   );
 
-  if (!data) return <BancoSkeleton />;
+  if (!data) {
+    return (
+      <PageTransition>
+        <BancoSkeleton />
+      </PageTransition>
+    );
+  }
 
   const { bank, history } = data;
   const isPositive = bank.saldoAtual > 0;
@@ -328,7 +317,8 @@ export default function BancoPage() {
   }));
 
   return (
-    <div className="space-y-6">
+    <PageTransition>
+      <ContentFade className="space-y-6">
       <PageHeader
         title="Banco de horas"
         description="Saldo anterior, da semana e atual."
@@ -418,8 +408,8 @@ export default function BancoPage() {
       </Card>
 
       {/* Secondary cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="animate-slide-up" style={{ animationDelay: "0ms" }}>
+      <RevealStagger className="grid gap-4 sm:grid-cols-2">
+        <Card>
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--text-muted)]">
@@ -443,7 +433,7 @@ export default function BancoPage() {
           <Sparkline points={prevSpark} positive={bank.saldoAnterior >= 0} />
         </Card>
 
-        <Card className="animate-slide-up" style={{ animationDelay: "50ms" }}>
+        <Card>
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-[color:var(--text-muted)]">
@@ -470,72 +460,76 @@ export default function BancoPage() {
           </div>
           <Sparkline points={weekSpark} positive={bank.saldoSemana >= 0} />
         </Card>
-      </div>
+      </RevealStagger>
 
       {/* Chart */}
-      <Card className="animate-slide-up" style={{ animationDelay: "100ms" }}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-[color:var(--text)]">
-            Evolução do banco
-          </h2>
-        </div>
-        <Tabs
-          items={tabItems}
-          defaultTab={period}
-          onChange={(id) => setPeriod(id as Period)}
-        />
-      </Card>
+      <Reveal>
+        <Card>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-[color:var(--text)]">
+              Evolução do banco
+            </h2>
+          </div>
+          <Tabs
+            items={tabItems}
+            defaultTab={period}
+            onChange={(id) => setPeriod(id as Period)}
+          />
+        </Card>
+      </Reveal>
 
       {/* Insights */}
       {history.length > 0 && insights ? (
-        <Card variant="muted" className="animate-slide-up" style={{ animationDelay: "150ms" }}>
-          <h2 className="mb-3 text-sm font-semibold text-[color:var(--text)]">
-            Insights
-          </h2>
-          <div className="space-y-3 text-sm text-[color:var(--text-secondary)]">
-            <p>
-              <span className="font-medium text-[color:var(--text)]">Tendência:</span>{" "}
-              {insights.delta > 0 ? (
-                <>
-                  ↑ Seu saldo aumentou{" "}
-                  <strong className="text-[color:var(--status-success)]">
-                    {formatMinutesLong(insights.delta)}
-                  </strong>{" "}
-                  nas últimas 2 semanas
-                </>
-              ) : insights.delta < 0 ? (
-                <>
-                  ↓ Seu saldo caiu{" "}
-                  <strong className="text-[color:var(--status-danger)]">
-                    {formatMinutesLong(Math.abs(insights.delta))}
-                  </strong>{" "}
-                  nas últimas 2 semanas
-                </>
-              ) : (
-                <>→ Seu saldo se manteve estável nas últimas 2 semanas</>
-              )}
-            </p>
-            <p>
-              <span className="font-medium text-[color:var(--text)]">Projeção:</span>{" "}
-              Se mantiver o ritmo atual, em 4 semanas terá{" "}
-              <strong
-                className={
-                  insights.projected >= 0
-                    ? "text-[color:var(--status-success)]"
-                    : "text-[color:var(--status-danger)]"
-                }
-              >
-                {formatMinutesLong(insights.projected, true)}
-              </strong>
-              {insights.projectedDelta !== 0 ? (
-                <>
-                  {" "}
-                  ({formatMinutesLong(insights.projectedDelta, true)} vs hoje)
-                </>
-              ) : null}
-            </p>
-          </div>
-        </Card>
+        <Reveal>
+          <Card variant="muted">
+            <h2 className="mb-3 text-sm font-semibold text-[color:var(--text)]">
+              Insights
+            </h2>
+            <div className="space-y-3 text-sm text-[color:var(--text-secondary)]">
+              <p>
+                <span className="font-medium text-[color:var(--text)]">Tendência:</span>{" "}
+                {insights.delta > 0 ? (
+                  <>
+                    ↑ Seu saldo aumentou{" "}
+                    <strong className="text-[color:var(--status-success)]">
+                      {formatMinutesLong(insights.delta)}
+                    </strong>{" "}
+                    nas últimas 2 semanas
+                  </>
+                ) : insights.delta < 0 ? (
+                  <>
+                    ↓ Seu saldo caiu{" "}
+                    <strong className="text-[color:var(--status-danger)]">
+                      {formatMinutesLong(Math.abs(insights.delta))}
+                    </strong>{" "}
+                    nas últimas 2 semanas
+                  </>
+                ) : (
+                  <>→ Seu saldo se manteve estável nas últimas 2 semanas</>
+                )}
+              </p>
+              <p>
+                <span className="font-medium text-[color:var(--text)]">Projeção:</span>{" "}
+                Se mantiver o ritmo atual, em 4 semanas terá{" "}
+                <strong
+                  className={
+                    insights.projected >= 0
+                      ? "text-[color:var(--status-success)]"
+                      : "text-[color:var(--status-danger)]"
+                  }
+                >
+                  {formatMinutesLong(insights.projected, true)}
+                </strong>
+                {insights.projectedDelta !== 0 ? (
+                  <>
+                    {" "}
+                    ({formatMinutesLong(insights.projectedDelta, true)} vs hoje)
+                  </>
+                ) : null}
+              </p>
+            </div>
+          </Card>
+        </Reveal>
       ) : history.length === 0 ? (
         <EmptyState
           icon={History}
@@ -545,6 +539,7 @@ export default function BancoPage() {
           onAction={() => router.push("/ponto")}
         />
       ) : null}
-    </div>
+      </ContentFade>
+    </PageTransition>
   );
 }

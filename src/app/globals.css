@@ -225,6 +225,38 @@ html.light {
   75% { transform: translateX(-2px); }
 }
 
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes contentFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes toastBounce {
+  0% { opacity: 0; transform: translateX(16px) scale(0.96); }
+  60% { opacity: 1; transform: translateX(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes actionPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes focusRingPop {
+  from { box-shadow: 0 0 0 0 transparent; transform: scale(0.98); }
+  to { box-shadow: 0 0 0 3px var(--ring); transform: scale(1); }
+}
+
+@keyframes rippleBurst {
+  0% { transform: scale(0); opacity: 0.35; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
 /* ─── Utility animation classes ─── */
 .animate-fade-in { animation: fadeIn var(--motion-normal) ease both; }
 .animate-slide-up { animation: slideUp var(--motion-normal) ease both; }
@@ -234,6 +266,8 @@ html.light {
 .animate-scale-in { animation: scale-in var(--motion-normal) ease both; }
 .animate-pulse-soft { animation: pulse-soft 1.8s ease-in-out infinite; }
 .animate-shake { animation: shake 0.45s ease both; }
+.animate-toast-bounce { animation: toastBounce 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-action-pulse { animation: actionPulse 280ms ease-out; }
 .animate-shimmer {
   background: linear-gradient(
     90deg,
@@ -246,6 +280,116 @@ html.light {
 }
 .animate-spin-slow { animation: spin 0.8s linear infinite; }
 
+/* Page + content transitions */
+.page-transition {
+  animation: pageEnter 300ms ease-out both;
+}
+
+.content-fade {
+  transition: opacity 280ms ease-out;
+}
+
+.content-fade--in {
+  animation: contentFadeIn 280ms ease-out both;
+}
+
+.content-fade--out {
+  opacity: 0;
+}
+
+/* Scroll reveal */
+.reveal-item {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 320ms ease-out,
+    transform 320ms ease-out;
+  will-change: opacity, transform;
+}
+
+.reveal-item--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Interactive polish */
+.card-interactive {
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-interactive {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease,
+    opacity 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.btn-interactive:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.btn-interactive:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-interactive:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.btn-ripple-ink {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  animation: rippleBurst 450ms ease-out forwards;
+}
+
+.field-focusable {
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease,
+    background-color 200ms ease;
+}
+
+.field-focusable:focus {
+  outline: none;
+  transform: scale(1);
+  animation: focusRingPop 180ms ease-out both;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.table-row-interactive {
+  transition: background-color 180ms ease;
+}
+
+.table-row-interactive:hover {
+  background: color-mix(in oklab, var(--brand-soft) 70%, transparent);
+}
+
+.nav-icon-nudge {
+  transition: transform 200ms ease;
+}
+
+.group:hover .nav-icon-nudge {
+  transform: translateX(2px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -254,6 +398,17 @@ html.light {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .page-transition,
+  .content-fade--in,
+  .reveal-item,
+  .reveal-item--visible,
+  .card-interactive:hover,
+  .btn-interactive:hover:not(:disabled),
+  .btn-interactive:active:not(:disabled) {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 

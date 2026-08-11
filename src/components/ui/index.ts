@@ -14,3 +14,4 @@ export { Tooltip } from "./tooltip";
 export { EmptyState } from "./empty-state";
 export { Tabs } from "./tabs";
 export type { TabItem } from "./tabs";
+export { PageTransition, Reveal, RevealStagger, ContentFade } from "@/components/motion";

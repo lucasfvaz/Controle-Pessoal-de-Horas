@@ -77,8 +77,8 @@ function FloatingIconField({
         onBlur={() => setFocused(false)}
         placeholder=" "
         className={cn(
-          "peer w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] py-3.5 pl-11 pr-3 text-sm text-[color:var(--text)] outline-none transition-all duration-200",
-          "placeholder:text-transparent focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--ring)]"
+          "field-focusable peer w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] py-3.5 pl-11 pr-3 text-sm text-[color:var(--text)]",
+          "placeholder:text-transparent focus:border-[color:var(--brand)]"
         )}
       />
       <label

@@ -15,6 +15,12 @@ import {
   useToast,
 } from "@/components/ui";
 import {
+  PageTransition,
+  Reveal,
+  ContentFade,
+} from "@/components/motion";
+import { useCountUp } from "@/hooks/use-count-up";
+import {
   calcularHorasTrabalhadas,
   calcularSaldoDia,
   metaDiariaReferencia,
@@ -280,6 +286,9 @@ function PunchForm() {
     ? calcularSaldoDia(preview.totalMinutos, dailyGoal)
     : null;
 
+  const totalAnim = useCountUp(preview?.totalMinutos ?? 0);
+  const balanceAnim = useCountUp(dayBalance ?? 0);
+
   const goalPct = preview
     ? Math.min(100, Math.round((preview.totalMinutos / Math.max(1, dailyGoal)) * 100))
     : 0;
@@ -424,10 +433,17 @@ function PunchForm() {
     router.push("/historico");
   }
 
-  if (loading) return <PontoSkeleton />;
+  if (loading) {
+    return (
+      <PageTransition>
+        <PontoSkeleton />
+      </PageTransition>
+    );
+  }
 
   return (
-    <div>
+    <PageTransition>
+      <ContentFade>
       <PageHeader
         title={editId ? "Editar ponto" : "Registrar ponto"}
         description="Informe as quatro batidas. O cálculo usa os dois períodos de trabalho."
@@ -536,109 +552,111 @@ function PunchForm() {
           </div>
         </Card>
 
-        <Card className="animate-slide-up h-fit lg:sticky lg:top-24">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-[color:var(--text)]">
-              Resumo visual
-            </h2>
-            <Clock className="h-4 w-4 text-[color:var(--text-muted)]" />
-          </div>
-
-          {preview ? (
-            <div className="mt-5 space-y-5 transition-all duration-300">
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-                <ProgressRing
-                  value={preview.totalMinutos}
-                  max={dailyGoal}
-                  size={112}
-                  strokeWidth={10}
-                  label="meta dia"
-                />
-                <div className="w-full space-y-2">
-                  <ProgressBar value={goalPct} showLabel />
-                  <p className="text-xs text-[color:var(--text-muted)]">
-                    Meta diária ref.: {formatMinutesLong(dailyGoal)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-4 py-3 transition-colors">
-                  <div className="mb-2 flex items-center justify-between text-xs">
-                    <span className="uppercase text-[color:var(--text-muted)]">
-                      Período 1
-                    </span>
-                    <span className="font-medium tabular-nums">
-                      {formatMinutesLong(preview.periodo1)}
-                    </span>
-                  </div>
-                  <p className="mb-2 text-sm text-[color:var(--text-secondary)]">
-                    {entryTime} → {breakStart}
-                  </p>
-                  <div className="h-2 overflow-hidden rounded-full bg-[color:var(--border)]">
-                    <div
-                      className="h-full rounded-full bg-[color:var(--brand)] transition-all duration-500"
-                      style={{
-                        width: `${(preview.periodo1 / periodMax) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-4 py-3 transition-colors">
-                  <div className="mb-2 flex items-center justify-between text-xs">
-                    <span className="uppercase text-[color:var(--text-muted)]">
-                      Período 2
-                    </span>
-                    <span className="font-medium tabular-nums">
-                      {formatMinutesLong(preview.periodo2)}
-                    </span>
-                  </div>
-                  <p className="mb-2 text-sm text-[color:var(--text-secondary)]">
-                    {breakEnd} → {exitTime}
-                  </p>
-                  <div className="h-2 overflow-hidden rounded-full bg-[color:var(--border)]">
-                    <div
-                      className="h-full rounded-full bg-[color:var(--brand-hover)] transition-all duration-500"
-                      style={{
-                        width: `${(preview.periodo2 / periodMax) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--brand-soft)] px-4 py-4">
-                <p className="text-xs uppercase text-[color:var(--text-muted)]">
-                  Total trabalhado
-                </p>
-                <p
-                  key={preview.totalMinutos}
-                  className="mt-1 text-3xl font-semibold tabular-nums text-[color:var(--brand)] animate-fade-in"
-                >
-                  {formatMinutesLong(preview.totalMinutos)}
-                </p>
-                {dayBalance != null ? (
-                  <p
-                    className={cn(
-                      "mt-2 text-sm font-medium tabular-nums transition-colors",
-                      dayBalance >= 0
-                        ? "text-[color:var(--status-success)]"
-                        : "text-[color:var(--status-danger)]"
-                    )}
-                  >
-                    Saldo do dia: {formatMinutesLong(dayBalance, true)}
-                  </p>
-                ) : null}
-              </div>
+        <Reveal>
+          <Card className="h-fit lg:sticky lg:top-24">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-[color:var(--text)]">
+                Resumo visual
+              </h2>
+              <Clock className="h-4 w-4 text-[color:var(--text-muted)]" />
             </div>
-          ) : (
-            <p className="mt-4 text-sm text-[color:var(--status-warning)]">
-              Ordem inválida das batidas. Esperado: Entrada &lt; Saída intervalo ≤
-              Retorno &lt; Saída.
-            </p>
-          )}
-        </Card>
+
+            {preview ? (
+              <div className="mt-5 space-y-5 transition-all duration-300">
+                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+                  <ProgressRing
+                    value={preview.totalMinutos}
+                    max={dailyGoal}
+                    size={112}
+                    strokeWidth={10}
+                    label="meta dia"
+                  />
+                  <div className="w-full space-y-2">
+                    <ProgressBar value={goalPct} showLabel />
+                    <p className="text-xs text-[color:var(--text-muted)]">
+                      Meta diária ref.: {formatMinutesLong(dailyGoal)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-4 py-3 transition-colors">
+                    <div className="mb-2 flex items-center justify-between text-xs">
+                      <span className="uppercase text-[color:var(--text-muted)]">
+                        Período 1
+                      </span>
+                      <span className="font-medium tabular-nums">
+                        {formatMinutesLong(preview.periodo1)}
+                      </span>
+                    </div>
+                    <p className="mb-2 text-sm text-[color:var(--text-secondary)]">
+                      {entryTime} → {breakStart}
+                    </p>
+                    <div className="h-2 overflow-hidden rounded-full bg-[color:var(--border)]">
+                      <div
+                        className="h-full rounded-full bg-[color:var(--brand)] transition-all duration-500"
+                        style={{
+                          width: `${(preview.periodo1 / periodMax) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-4 py-3 transition-colors">
+                    <div className="mb-2 flex items-center justify-between text-xs">
+                      <span className="uppercase text-[color:var(--text-muted)]">
+                        Período 2
+                      </span>
+                      <span className="font-medium tabular-nums">
+                        {formatMinutesLong(preview.periodo2)}
+                      </span>
+                    </div>
+                    <p className="mb-2 text-sm text-[color:var(--text-secondary)]">
+                      {breakEnd} → {exitTime}
+                    </p>
+                    <div className="h-2 overflow-hidden rounded-full bg-[color:var(--border)]">
+                      <div
+                        className="h-full rounded-full bg-[color:var(--brand-hover)] transition-all duration-500"
+                        style={{
+                          width: `${(preview.periodo2 / periodMax) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--brand-soft)] px-4 py-4">
+                  <p className="text-xs uppercase text-[color:var(--text-muted)]">
+                    Total trabalhado
+                  </p>
+                  <p
+                    key={preview.totalMinutos}
+                    className="mt-1 text-3xl font-semibold tabular-nums text-[color:var(--brand)] animate-fade-in"
+                  >
+                    {formatMinutesLong(totalAnim)}
+                  </p>
+                  {dayBalance != null ? (
+                    <p
+                      className={cn(
+                        "mt-2 text-sm font-medium tabular-nums transition-colors",
+                        dayBalance >= 0
+                          ? "text-[color:var(--status-success)]"
+                          : "text-[color:var(--status-danger)]"
+                      )}
+                    >
+                      Saldo do dia: {formatMinutesLong(balanceAnim, true)}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-[color:var(--status-warning)]">
+                Ordem inválida das batidas. Esperado: Entrada &lt; Saída intervalo ≤
+                Retorno &lt; Saída.
+              </p>
+            )}
+          </Card>
+        </Reveal>
       </form>
 
       <Modal
@@ -670,13 +688,20 @@ function PunchForm() {
           mantido.
         </p>
       </Modal>
-    </div>
+      </ContentFade>
+    </PageTransition>
   );
 }
 
 export default function PontoPage() {
   return (
-    <Suspense fallback={<PontoSkeleton />}>
+    <Suspense
+      fallback={
+        <PageTransition>
+          <PontoSkeleton />
+        </PageTransition>
+      }
+    >
       <PunchForm />
     </Suspense>
   );

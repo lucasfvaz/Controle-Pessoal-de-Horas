@@ -12,6 +12,13 @@ import {
   Skeleton,
 } from "@/components/ui";
 import {
+  PageTransition,
+  Reveal,
+  RevealStagger,
+  ContentFade,
+} from "@/components/motion";
+import { useCountUp } from "@/hooks/use-count-up";
+import {
   formatDateBR,
   formatMinutesLong,
   getWeekStart,
@@ -60,28 +67,6 @@ type PlanningResponse = {
 };
 
 type DayResumo = ReturnType<typeof calcularResumoSemana>["porDia"][number];
-
-function useCountUp(target: number, duration = 800) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setValue(target);
-      return;
-    }
-    let frame = 0;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(Math.round(target * eased));
-      if (t < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
-  return value;
-}
 
 function dayStatusColor(day: DayResumo, today: string) {
   if (!day.registered) {
@@ -246,10 +231,18 @@ export default function SemanaPage() {
   const bancoAnim = useCountUp(data?.bank.saldoAtual ?? 0);
 
   if (error) {
-    return <AlertBanner type="danger" message={error} dismissible />;
+    return (
+      <PageTransition>
+        <AlertBanner type="danger" message={error} dismissible />
+      </PageTransition>
+    );
   }
   if (loading || !data || !resumo) {
-    return <SemanaSkeleton />;
+    return (
+      <PageTransition>
+        <SemanaSkeleton />
+      </PageTransition>
+    );
   }
 
   const { planning, bank } = data;
@@ -272,7 +265,8 @@ export default function SemanaPage() {
       (planning.previsaoFechamentoMinutos - planning.metaMinutos);
 
   return (
-    <div className="space-y-6">
+    <PageTransition>
+      <ContentFade className="space-y-6">
       <PageHeader
         title="Planejamento semanal"
         description="Resumo da semana, saldo e sugestão de compensação."
@@ -351,36 +345,45 @@ export default function SemanaPage() {
             <ProgressBar value={weekPct} showLabel className="mb-5" />
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-              <HeroMetric label="Meta" value={formatMinutesLong(metaAnim)} />
-              <HeroMetric
-                label="Trabalhado"
-                value={formatMinutesLong(workedAnim)}
-                tone="text-[color:var(--brand)]"
-              />
-              <HeroMetric
-                label="Faltam"
-                value={formatMinutesLong(faltaAnim)}
-                tone="text-[color:var(--status-warning)]"
-              />
-              <HeroMetric
-                label="Saldo"
-                value={formatMinutesLong(saldoAnim, true)}
-                tone={
-                  resumo.saldoMinutos >= 0
-                    ? "text-[color:var(--status-success)]"
-                    : "text-[color:var(--status-danger)]"
-                }
-              />
-              <HeroMetric
-                label="Banco"
-                value={formatMinutesLong(bancoAnim, true)}
-                tone={
-                  bank.saldoAtual >= 0
-                    ? "text-[color:var(--status-success)]"
-                    : "text-[color:var(--status-danger)]"
-                }
-                className="col-span-2 lg:col-span-1"
-              />
+              <Reveal delay={0}>
+                <HeroMetric label="Meta" value={formatMinutesLong(metaAnim)} />
+              </Reveal>
+              <Reveal delay={70}>
+                <HeroMetric
+                  label="Trabalhado"
+                  value={formatMinutesLong(workedAnim)}
+                  tone="text-[color:var(--brand)]"
+                />
+              </Reveal>
+              <Reveal delay={140}>
+                <HeroMetric
+                  label="Faltam"
+                  value={formatMinutesLong(faltaAnim)}
+                  tone="text-[color:var(--status-warning)]"
+                />
+              </Reveal>
+              <Reveal delay={210}>
+                <HeroMetric
+                  label="Saldo"
+                  value={formatMinutesLong(saldoAnim, true)}
+                  tone={
+                    resumo.saldoMinutos >= 0
+                      ? "text-[color:var(--status-success)]"
+                      : "text-[color:var(--status-danger)]"
+                  }
+                />
+              </Reveal>
+              <Reveal delay={280} className="col-span-2 lg:col-span-1">
+                <HeroMetric
+                  label="Banco"
+                  value={formatMinutesLong(bancoAnim, true)}
+                  tone={
+                    bank.saldoAtual >= 0
+                      ? "text-[color:var(--status-success)]"
+                      : "text-[color:var(--status-danger)]"
+                  }
+                />
+              </Reveal>
             </div>
           </div>
         </Card>
@@ -400,12 +403,15 @@ export default function SemanaPage() {
           <h2 className="mb-5 text-sm font-semibold text-[color:var(--text)]">
             Timeline da semana
           </h2>
-          <ol className="relative space-y-0 before:absolute before:bottom-4 before:left-[15px] before:top-4 before:w-px before:bg-[color:var(--border)]">
-            {resumo.porDia.map((day, index) => {
+          <RevealStagger
+            className="relative space-y-0 before:absolute before:bottom-4 before:left-[15px] before:top-4 before:w-px before:bg-[color:var(--border)]"
+            step={40}
+          >
+            {resumo.porDia.map((day) => {
               const suggestion = suggestionsByDate.get(day.date);
               const open = expanded[day.date] ?? false;
               return (
-                <li key={day.date} className="relative pl-10">
+                <div key={day.date} className="relative pl-10">
                   <span
                     className={cn(
                       "absolute left-2 top-5 h-3.5 w-3.5 rounded-full ring-4 ring-[color:var(--surface)]",
@@ -415,10 +421,9 @@ export default function SemanaPage() {
 
                   <div
                     className={cn(
-                      "mb-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)]/60 p-4 transition-colors animate-slide-up",
+                      "mb-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)]/60 p-4 transition-colors",
                       open && "bg-[color:var(--surface)]"
                     )}
-                    style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <button
                       type="button"
@@ -543,13 +548,14 @@ export default function SemanaPage() {
                       </div>
                     ) : null}
                   </div>
-                </li>
+                </div>
               );
             })}
-          </ol>
+          </RevealStagger>
         </Card>
 
         {/* Smart planner */}
+        <Reveal>
         <div
           className="rounded-2xl p-[1px]"
           style={{
@@ -670,8 +676,10 @@ export default function SemanaPage() {
             ) : null}
           </Card>
         </div>
+        </Reveal>
       </div>
-    </div>
+      </ContentFade>
+    </PageTransition>
   );
 }
 

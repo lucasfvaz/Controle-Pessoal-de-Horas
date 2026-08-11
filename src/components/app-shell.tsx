@@ -254,13 +254,13 @@ function MoreSheet({
                 onClick={requestClose}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                  "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
                   active
                     ? "bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
                     : "text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-muted)]"
                 )}
               >
-                <span className="relative">
+                <span className="relative nav-icon-nudge">
                   <Icon className="h-5 w-5" />
                   {item.href === "/banco" && bankNegative ? (
                     <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[color:var(--status-danger)]" />
@@ -310,7 +310,7 @@ function SidebarLink({
           : "text-[color:var(--text-secondary)] hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
       )}
     >
-      <span className="relative transition-transform duration-200 group-hover:translate-x-0.5">
+      <span className="relative nav-icon-nudge">
         <Icon className="h-4 w-4" />
         {item.href === "/banco" && bankNegative ? (
           <span
@@ -617,7 +617,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <main
           key={contentKey}
-          className="animate-slide-up px-4 py-6 pb-28 lg:px-8 lg:pb-10"
+          className="px-4 py-6 pb-28 lg:px-8 lg:pb-10"
         >
           {children}
         </main>
@@ -727,11 +727,11 @@ function MobileNavLink({
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[10px] transition-colors",
+        "group flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[10px] transition-colors",
         active ? "text-[color:var(--brand)]" : "text-[color:var(--text-muted)]"
       )}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="nav-icon-nudge h-5 w-5" />
       {label}
     </Link>
   );

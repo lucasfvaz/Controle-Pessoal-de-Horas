@@ -16,6 +16,11 @@ import {
   useToast,
 } from "@/components/ui";
 import {
+  PageTransition,
+  RevealStagger,
+  ContentFade,
+} from "@/components/motion";
+import {
   formatDateBR,
   parseHHMM,
   todayDateOnly,
@@ -488,7 +493,7 @@ export default function AulasPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageTransition className="space-y-6">
       <PageHeader
         title="Aulas"
         description="Cadastre disciplinas do mestrado. Elas não contam como horas trabalhadas, mas ocupam a agenda no planejamento."
@@ -518,7 +523,7 @@ export default function AulasPage() {
           onAction={openCreate}
         />
       ) : (
-        <>
+        <ContentFade className="space-y-8">
           <WeeklyGrid items={items} />
 
           <div className="space-y-8">
@@ -533,7 +538,7 @@ export default function AulasPage() {
                     {group.items.length}
                   </Badge>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <RevealStagger className="grid gap-3 sm:grid-cols-2">
                   {group.items.map((item) => (
                     <ClassCard
                       key={item.id}
@@ -543,11 +548,11 @@ export default function AulasPage() {
                       onDelete={() => setDeleteTarget(item)}
                     />
                   ))}
-                </div>
+                </RevealStagger>
               </section>
             ))}
           </div>
-        </>
+        </ContentFade>
       )}
 
       <Modal
@@ -598,6 +603,6 @@ export default function AulasPage() {
           ? Esta ação não pode ser desfeita.
         </p>
       </Modal>
-    </div>
+    </PageTransition>
   );
 }

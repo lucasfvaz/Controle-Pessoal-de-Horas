@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertBanner,
@@ -11,6 +11,13 @@ import {
   SkeletonCard,
   StatCard,
 } from "@/components/ui";
+import {
+  PageTransition,
+  Reveal,
+  RevealStagger,
+  ContentFade,
+} from "@/components/motion";
+import { useCountUp } from "@/hooks/use-count-up";
 import { formatDateBR, formatMinutesLong } from "@/domain/time";
 import { cn } from "@/lib/utils";
 import {
@@ -69,55 +76,6 @@ type DashboardData = {
 
 function minutesTick(v: number) {
   return formatMinutesLong(v);
-}
-
-function useCountUp(target: number, duration = 900) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setValue(target);
-      return;
-    }
-    let frame = 0;
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(Math.round(target * eased));
-      if (t < 1) frame = requestAnimationFrame(tick);
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
-
-  return value;
-}
-
-function useInView<T extends HTMLElement>(once = true) {
-  const ref = useRef<T | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          if (once) obs.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [once]);
-
-  return { ref, visible };
 }
 
 function ChartTooltip({
@@ -264,8 +222,6 @@ const quickActions = [
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
-  const weekChart = useInView<HTMLDivElement>();
-  const bankChart = useInView<HTMLDivElement>();
 
   useEffect(() => {
     fetch("/api/dashboard")
@@ -294,10 +250,18 @@ export default function DashboardPage() {
   }, [data]);
 
   if (error) {
-    return <AlertBanner type="danger" message={error} dismissible />;
+    return (
+      <PageTransition>
+        <AlertBanner type="danger" message={error} dismissible />
+      </PageTransition>
+    );
   }
   if (!data) {
-    return <DashboardSkeleton />;
+    return (
+      <PageTransition>
+        <DashboardSkeleton />
+      </PageTransition>
+    );
   }
 
   const { resumo, bank, planning, alerts, charts } = data;
@@ -314,7 +278,8 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className="space-y-6">
+    <PageTransition>
+      <ContentFade className="space-y-6">
       <PageHeader
         title="Dashboard"
         description={`Semana ${formatDateBR(resumo.weekStart)} – ${formatDateBR(resumo.weekEnd)}`}
@@ -435,26 +400,23 @@ export default function DashboardPage() {
       </section>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <RevealStagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard
           label="Horas trabalhadas esta semana"
           value={formatMinutesLong(workedAnim)}
           tone="accent"
           icon={Clock}
-          style={{ animationDelay: "0ms" }}
         />
         <StatCard
           label="Meta semanal"
           value={formatMinutesLong(metaAnim)}
           icon={Target}
-          style={{ animationDelay: "50ms" }}
         />
         <StatCard
           label="Saldo da semana"
           value={formatMinutesLong(saldoAnim, true)}
           tone={resumo.saldoMinutos >= 0 ? "positive" : "negative"}
           icon={SaldoIcon}
-          style={{ animationDelay: "100ms" }}
         />
         <StatCard
           label="Banco de horas"
@@ -462,7 +424,6 @@ export default function DashboardPage() {
           hint={bank.status}
           tone={bank.saldoAtual >= 0 ? "positive" : "negative"}
           icon={Wallet}
-          style={{ animationDelay: "150ms" }}
         >
           <Sparkline points={sparkPoints} />
         </StatCard>
@@ -471,39 +432,78 @@ export default function DashboardPage() {
           value={formatMinutesLong(compensarAnim)}
           tone={horasCompensar > 0 ? "negative" : "positive"}
           icon={AlertTriangle}
-          style={{ animationDelay: "200ms" }}
         />
-      </div>
+      </RevealStagger>
 
       {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card
-          className={cn(
-            "transition-opacity duration-700",
-            weekChart.visible ? "opacity-100 animate-fade-in" : "opacity-0"
-          )}
-        >
-          <div ref={weekChart.ref}>
-            <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)]">
-              Meta semanal × Horas trabalhadas
-            </h2>
-            <div className="h-64">
+      <Reveal className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)]">
+            Meta semanal × Horas trabalhadas
+          </h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts.week}>
+                <defs>
+                  <linearGradient id="metaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--text-muted)" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="var(--text-muted)" stopOpacity={0.25} />
+                  </linearGradient>
+                  <linearGradient id="workGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--brand)" stopOpacity={1} />
+                    <stop offset="100%" stopColor="var(--brand)" stopOpacity={0.35} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12, fill: "var(--text-muted)" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={minutesTick}
+                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+                  width={48}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <RechartsTooltip content={<ChartTooltip />} />
+                <Legend />
+                <Bar dataKey="meta" name="Meta" fill="url(#metaGrad)" radius={[6, 6, 0, 0]} />
+                <Bar
+                  dataKey="trabalhado"
+                  name="Trabalhado"
+                  fill="url(#workGrad)"
+                  radius={[6, 6, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)]">
+            Saldo de banco de horas ao longo do tempo
+          </h2>
+          <div className="h-64">
+            {bankLineData.length === 0 ? (
+              <p className="text-sm text-[color:var(--text-muted)]">
+                Sem histórico ainda. Registre batidas para ver a evolução.
+              </p>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.week}>
+                <LineChart data={bankLineData}>
                   <defs>
-                    <linearGradient id="metaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--text-muted)" stopOpacity={0.85} />
-                      <stop offset="100%" stopColor="var(--text-muted)" stopOpacity={0.25} />
-                    </linearGradient>
-                    <linearGradient id="workGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--brand)" stopOpacity={1} />
-                      <stop offset="100%" stopColor="var(--brand)" stopOpacity={0.35} />
+                    <linearGradient id="bankArea" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="var(--brand)" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 12, fill: "var(--text-muted)" }}
+                    dataKey="label"
+                    tick={{ fontSize: 11, fill: "var(--text-muted)" }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -514,82 +514,29 @@ export default function DashboardPage() {
                     axisLine={false}
                     tickLine={false}
                   />
-                  <RechartsTooltip content={<ChartTooltip />} />
-                  <Legend />
-                  <Bar dataKey="meta" name="Meta" fill="url(#metaGrad)" radius={[6, 6, 0, 0]} />
-                  <Bar
-                    dataKey="trabalhado"
-                    name="Trabalhado"
-                    fill="url(#workGrad)"
-                    radius={[6, 6, 0, 0]}
+                  <RechartsTooltip content={<ChartTooltip signed />} />
+                  <Area
+                    type="monotone"
+                    dataKey="saldo"
+                    stroke="none"
+                    fill="url(#bankArea)"
                   />
-                </BarChart>
+                  <Line
+                    type="monotone"
+                    dataKey="saldo"
+                    name="Saldo"
+                    stroke="var(--brand)"
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ r: 4, fill: "var(--brand)" }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
-            </div>
+            )}
           </div>
         </Card>
-
-        <Card
-          className={cn(
-            "transition-opacity duration-700",
-            bankChart.visible ? "opacity-100 animate-fade-in" : "opacity-0"
-          )}
-        >
-          <div ref={bankChart.ref}>
-            <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)]">
-              Saldo de banco de horas ao longo do tempo
-            </h2>
-            <div className="h-64">
-              {bankLineData.length === 0 ? (
-                <p className="text-sm text-[color:var(--text-muted)]">
-                  Sem histórico ainda. Registre batidas para ver a evolução.
-                </p>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={bankLineData}>
-                    <defs>
-                      <linearGradient id="bankArea" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.35} />
-                        <stop offset="100%" stopColor="var(--brand)" stopOpacity={0.02} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 11, fill: "var(--text-muted)" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tickFormatter={minutesTick}
-                      tick={{ fontSize: 11, fill: "var(--text-muted)" }}
-                      width={48}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <RechartsTooltip content={<ChartTooltip signed />} />
-                    <Area
-                      type="monotone"
-                      dataKey="saldo"
-                      stroke="none"
-                      fill="url(#bankArea)"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="saldo"
-                      name="Saldo"
-                      stroke="var(--brand)"
-                      strokeWidth={2.5}
-                      dot={false}
-                      activeDot={{ r: 4, fill: "var(--brand)" }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-        </Card>
-      </div>
-    </div>
+      </Reveal>
+      </ContentFade>
+    </PageTransition>
   );
 }

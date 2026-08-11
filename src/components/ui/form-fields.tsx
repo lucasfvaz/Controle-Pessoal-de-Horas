@@ -26,7 +26,7 @@ export function Input({
       <div className="relative">
         <input
           className={cn(
-            "w-full rounded-xl border bg-[color:var(--surface)] px-3 py-2.5 text-sm text-[color:var(--text)] outline-none transition-colors duration-200 placeholder:text-[color:var(--text-muted)] focus:ring-2 focus:ring-[color:var(--ring)]",
+            "field-focusable w-full rounded-xl border bg-[color:var(--surface)] px-3 py-2.5 text-sm text-[color:var(--text)] placeholder:text-[color:var(--text-muted)]",
             error
               ? "border-[color:var(--status-danger)]"
               : success
@@ -69,7 +69,7 @@ export function Select({
       <div className="relative">
         <select
           className={cn(
-            "w-full rounded-xl border bg-[color:var(--surface)] px-3 py-2.5 text-sm text-[color:var(--text)] outline-none transition-colors duration-200 focus:ring-2 focus:ring-[color:var(--ring)]",
+            "field-focusable w-full rounded-xl border bg-[color:var(--surface)] px-3 py-2.5 text-sm text-[color:var(--text)]",
             error
               ? "border-[color:var(--status-danger)]"
               : success
@@ -106,7 +106,7 @@ export function TextArea({
       ) : null}
       <textarea
         className={cn(
-          "w-full rounded-xl border bg-[color:var(--surface)] px-3 py-2.5 text-sm text-[color:var(--text)] outline-none transition-colors duration-200 placeholder:text-[color:var(--text-muted)] focus:ring-2 focus:ring-[color:var(--ring)]",
+          "field-focusable w-full rounded-xl border bg-[color:var(--surface)] px-3 py-2.5 text-sm text-[color:var(--text)] placeholder:text-[color:var(--text-muted)]",
           error
             ? "border-[color:var(--status-danger)]"
             : success

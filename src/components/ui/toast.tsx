@@ -88,7 +88,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 styles[item.variant],
                 item.leaving
                   ? "animate-slide-out-right"
-                  : "animate-slide-in-right"
+                  : "animate-toast-bounce"
               )}
               role="status"
             >

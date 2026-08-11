@@ -7,11 +7,13 @@ export function Card({
   className,
   variant = "default",
   style,
+  interactive = true,
 }: {
   children: React.ReactNode;
   className?: string;
   variant?: "default" | "glass" | "muted";
   style?: React.CSSProperties;
+  interactive?: boolean;
 }) {
   const variants = {
     default:
@@ -26,6 +28,7 @@ export function Card({
     <div
       className={cn(
         "rounded-2xl border p-5 transition-colors duration-200",
+        interactive && "card-interactive",
         variants[variant],
         className
       )}

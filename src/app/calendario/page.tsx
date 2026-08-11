@@ -12,6 +12,12 @@ import {
   Tooltip,
 } from "@/components/ui";
 import {
+  PageTransition,
+  Reveal,
+  ContentFade,
+} from "@/components/motion";
+import { useCountUp } from "@/hooks/use-count-up";
+import {
   formatDateBR,
   formatMinutesLong,
   todayDateOnly,
@@ -411,6 +417,11 @@ export default function CalendarioPage() {
     };
   }, [days, dailyGoal]);
 
+  const totalWorkedAnim = useCountUp(monthSummary.totalWorked);
+  const avgAnim = useCountUp(monthSummary.avg);
+  const balanceAnim = useCountUp(monthSummary.balance);
+  const fulfilledAnim = useCountUp(monthSummary.fulfilled);
+
   const legendItems: Array<{
     key: LegendFilter;
     label: string;
@@ -428,7 +439,7 @@ export default function CalendarioPage() {
   const nextMonth = monthLabel(shiftMonthValue(month, 1));
 
   return (
-    <div>
+    <PageTransition>
       <PageHeader
         title="Calendário"
         description="Visão mensal da jornada e aulas."
@@ -468,7 +479,7 @@ export default function CalendarioPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <Reveal className="mb-4 flex flex-wrap gap-2">
         {legendItems.map((item) => (
           <button
             key={String(item.key)}
@@ -494,7 +505,7 @@ export default function CalendarioPage() {
             Limpar filtro
           </button>
         ) : null}
-      </div>
+      </Reveal>
 
       <div className="relative grid gap-6 lg:grid-cols-[1.45fr_0.85fr]">
         <div
@@ -521,6 +532,7 @@ export default function CalendarioPage() {
             {loading ? (
               <CalendarSkeleton />
             ) : (
+              <ContentFade>
               <div
                 key={animKey}
                 className={cn(
@@ -625,6 +637,7 @@ export default function CalendarioPage() {
                   })}
                 </div>
               </div>
+              </ContentFade>
             )}
           </Card>
         </div>
@@ -644,34 +657,36 @@ export default function CalendarioPage() {
         </Card>
       </div>
 
-      <Card variant="glass" className="mt-6 animate-slide-up">
-        <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)]">
-          Resumo de {monthLabel(month)}
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SummaryMetric
-            label="Total trabalhado"
-            value={formatMinutesLong(monthSummary.totalWorked)}
-          />
-          <SummaryMetric
-            label="Dias úteis cumpridos"
-            value={`${monthSummary.fulfilled}/${monthSummary.workdayCount}`}
-          />
-          <SummaryMetric
-            label="Média diária"
-            value={formatMinutesLong(monthSummary.avg)}
-          />
-          <SummaryMetric
-            label="Saldo mensal"
-            value={formatMinutesLong(monthSummary.balance, true)}
-            tone={
-              monthSummary.balance >= 0
-                ? "text-[color:var(--status-success)]"
-                : "text-[color:var(--status-danger)]"
-            }
-          />
-        </div>
-      </Card>
+      <Reveal>
+        <Card variant="glass" className="mt-6">
+          <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)]">
+            Resumo de {monthLabel(month)}
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <SummaryMetric
+              label="Total trabalhado"
+              value={formatMinutesLong(totalWorkedAnim)}
+            />
+            <SummaryMetric
+              label="Dias úteis cumpridos"
+              value={`${fulfilledAnim}/${monthSummary.workdayCount}`}
+            />
+            <SummaryMetric
+              label="Média diária"
+              value={formatMinutesLong(avgAnim)}
+            />
+            <SummaryMetric
+              label="Saldo mensal"
+              value={formatMinutesLong(balanceAnim, true)}
+              tone={
+                monthSummary.balance >= 0
+                  ? "text-[color:var(--status-success)]"
+                  : "text-[color:var(--status-danger)]"
+              }
+            />
+          </div>
+        </Card>
+      </Reveal>
 
       {selected ? (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -693,6 +708,6 @@ export default function CalendarioPage() {
           </div>
         </div>
       ) : null}
-    </div>
+    </PageTransition>
   );
 }
