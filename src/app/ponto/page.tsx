@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Card, Input, PageHeader, TextArea } from "@/components/ui";
+import { Button, Card, Input, PageHeader, TextArea, useToast } from "@/components/ui";
 import { calcularHorasTrabalhadas } from "@/domain/journey";
 import { formatMinutesLong, todayDateOnly } from "@/domain/time";
 import { Suspense } from "react";
@@ -11,6 +11,7 @@ function PunchForm() {
   const router = useRouter();
   const search = useSearchParams();
   const editId = search.get("id");
+  const { toast } = useToast();
 
   const [date, setDate] = useState(todayDateOnly());
   const [entryTime, setEntryTime] = useState("08:00");
@@ -99,8 +100,17 @@ function PunchForm() {
           ? data.error
           : "Não foi possível salvar. Verifique as batidas."
       );
+      toast({
+        variant: "error",
+        message: "Falha ao salvar o ponto.",
+      });
       return;
     }
+    toast({
+      variant: "success",
+      title: "Ponto salvo",
+      message: editId ? "Registro atualizado." : "Batidas registradas com sucesso.",
+    });
     router.push("/semana");
     router.refresh();
   }
@@ -111,8 +121,10 @@ function PunchForm() {
     const res = await fetch(`/api/punches/${editId}`, { method: "DELETE" });
     if (!res.ok) {
       setError("Falha ao apagar");
+      toast({ variant: "error", message: "Não foi possível apagar." });
       return;
     }
+    toast({ variant: "success", message: "Registro apagado." });
     router.push("/historico");
   }
 
@@ -174,7 +186,7 @@ function PunchForm() {
           />
           {error ? <p className="text-sm text-rose-700">{error}</p> : null}
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving} loading={saving}>
               {saving ? "Salvando…" : "Salvar"}
             </Button>
             {editId ? (

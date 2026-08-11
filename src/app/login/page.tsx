@@ -31,12 +31,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[radial-gradient(ellipse_at_top,_#d1e7dd_0%,_#f4f6f5_55%)] px-4">
-      <Card className="w-full max-w-md">
-        <p className="font-[family-name:var(--font-display)] text-3xl text-emerald-950">
+    <div className="flex min-h-dvh items-center justify-center bg-[color:var(--background)] px-4 transition-colors">
+      <Card variant="glass" className="w-full max-w-md animate-scale-in">
+        <p className="font-[family-name:var(--font-display)] text-3xl text-[color:var(--brand)]">
           Gestor de Jornada
         </p>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
           Controle pessoal de ponto, banco de horas e aulas do mestrado.
         </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -55,13 +55,13 @@ export default function LoginPage() {
             required
           />
           {error ? (
-            <p className="text-sm text-rose-700">{error}</p>
+            <p className="text-sm text-[color:var(--status-danger)]">{error}</p>
           ) : (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[color:var(--text-muted)]">
               Seed: admin@gestor.local / admin123
             </p>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" loading={loading}>
             {loading ? "Entrando…" : "Entrar"}
           </Button>
         </form>

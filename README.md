@@ -2,12 +2,15 @@
 
 Aplicativo web pessoal para controle de jornada de trabalho, banco de horas e compensação considerando aulas do mestrado.
 
+**Pasta do projeto:** `D:\Controle-Pessoal-de-Horas`
+
 ## Stack
 
-- Next.js 15 (App Router) + TypeScript + Tailwind CSS
+- Next.js 15 (App Router) + TypeScript + Tailwind CSS v4
 - Prisma + SQLite
 - NextAuth (credentials)
 - Vitest (cálculos de domínio)
+- Design system próprio (sem Radix/Headless UI)
 
 ## Como rodar
 
@@ -18,7 +21,7 @@ npm run db:seed
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000)
+Acesse [http://localhost:3001](http://localhost:3001) (porta 3001 para não conflitar com outros apps)
 
 **Login padrão (seed):** `admin@gestor.local` / `admin123`
 
@@ -39,10 +42,12 @@ npm test
 - Histórico com filtros
 - Banco de horas
 - Configurações editáveis (meta, horários, limites)
+- Tema claro/escuro (sistema + toggle manual)
 
 ## Estrutura
 
 - `src/domain/` — regras puras e testáveis
+- `src/components/ui/` — design system
 - `src/app/api/` — REST handlers
 - `src/app/` — telas
 - `prisma/` — schema e seed

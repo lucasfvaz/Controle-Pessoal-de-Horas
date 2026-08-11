@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, Input, PageHeader, Select } from "@/components/ui";
+import { Button, Card, Input, PageHeader, Select, Toggle } from "@/components/ui";
 import { formatMinutesLong } from "@/domain/time";
 
 type Settings = {
@@ -134,16 +134,15 @@ export default function ConfiguracoesPage() {
             onChange={(e) => setBreakMinutes(e.target.value)}
             placeholder="01:00"
           />
-          <Select
-            label="Permitir compensação"
-            value={form.allowCompensation ? "yes" : "no"}
-            onChange={(e) =>
-              setForm({ ...form, allowCompensation: e.target.value === "yes" })
-            }
-          >
-            <option value="yes">Sim</option>
-            <option value="no">Não</option>
-          </Select>
+          <div className="flex items-end">
+            <Toggle
+              label="Permitir compensação de horas"
+              checked={form.allowCompensation}
+              onChange={(checked) =>
+                setForm({ ...form, allowCompensation: checked })
+              }
+            />
+          </div>
           <Input
             label="Limite diário razoável (HH:MM)"
             value={maxDaily}

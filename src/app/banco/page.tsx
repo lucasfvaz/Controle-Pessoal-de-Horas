@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, PageHeader, StatCard } from "@/components/ui";
+import { Badge, Card, PageHeader, StatCard } from "@/components/ui";
 import { formatDateBR, formatMinutesLong } from "@/domain/time";
 import {
   CartesianGrid,
@@ -50,17 +50,17 @@ export default function BancoPage() {
       />
 
       <div className="mb-4">
-        <span
-          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+        <Badge
+          color={
             bank.status === "POSITIVO"
-              ? "bg-emerald-100 text-emerald-800"
+              ? "emerald"
               : bank.status === "NEGATIVO"
-                ? "bg-rose-100 text-rose-800"
-                : "bg-slate-100 text-slate-700"
-          }`}
+                ? "rose"
+                : "slate"
+          }
         >
           {bank.status}
-        </span>
+        </Badge>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

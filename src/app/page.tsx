@@ -5,9 +5,19 @@ import {
   AlertBanner,
   Card,
   PageHeader,
+  ProgressBar,
+  ProgressRing,
+  SkeletonCard,
   StatCard,
 } from "@/components/ui";
 import { formatDateBR, formatMinutesLong } from "@/domain/time";
+import {
+  Clock3,
+  Target,
+  Scale,
+  Wallet,
+  TimerReset,
+} from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -16,7 +26,7 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -40,7 +50,10 @@ type DashboardData = {
     restanteMinutos: number;
     viavel: boolean;
   };
-  alerts: Array<{ type: "info" | "warning" | "success" | "danger"; message: string }>;
+  alerts: Array<{
+    type: "info" | "warning" | "success" | "danger";
+    message: string;
+  }>;
   charts: {
     week: Array<{ name: string; meta: number; trabalhado: number }>;
     bankHistory: Array<{ date: string; saldo: number }>;
@@ -66,83 +79,115 @@ export default function DashboardPage() {
   }, []);
 
   if (error) {
-    return <p className="text-rose-700">{error}</p>;
+    return (
+      <AlertBanner type="danger" message={error} dismissible />
+    );
   }
   if (!data) {
-    return <p className="text-slate-500">Carregando…</p>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
   }
 
   const { resumo, bank, planning, alerts, charts } = data;
   const horasCompensar = planning.restanteMinutos;
+  const weekPct =
+    resumo.metaMinutos > 0
+      ? Math.round((resumo.trabalhadoMinutos / resumo.metaMinutos) * 100)
+      : 0;
 
   return (
     <div>
       <PageHeader
         title="Dashboard"
         description={`Semana ${formatDateBR(resumo.weekStart)} – ${formatDateBR(resumo.weekEnd)}`}
+        action={
+          <ProgressRing
+            value={resumo.trabalhadoMinutos}
+            max={resumo.metaMinutos || 1}
+            label="meta"
+          />
+        }
       />
 
       <div className="mb-6 space-y-2">
         {alerts.map((a, i) => (
-          <AlertBanner key={i} type={a.type} message={a.message} />
+          <AlertBanner key={i} type={a.type} message={a.message} dismissible />
         ))}
       </div>
+
+      <Card variant="glass" className="mb-6">
+        <ProgressBar value={weekPct} showLabel />
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard
           label="Horas trabalhadas esta semana"
           value={formatMinutesLong(resumo.trabalhadoMinutos)}
           tone="accent"
+          icon={Clock3}
         />
         <StatCard
           label="Meta semanal"
           value={formatMinutesLong(resumo.metaMinutos)}
+          icon={Target}
         />
         <StatCard
           label="Saldo da semana"
           value={formatMinutesLong(resumo.saldoMinutos, true)}
           tone={resumo.saldoMinutos >= 0 ? "positive" : "negative"}
+          icon={Scale}
         />
         <StatCard
           label="Banco de horas"
           value={formatMinutesLong(bank.saldoAtual, true)}
           hint={bank.status}
           tone={bank.saldoAtual >= 0 ? "positive" : "negative"}
+          icon={Wallet}
         />
         <StatCard
           label="Horas a compensar"
           value={formatMinutesLong(horasCompensar)}
           tone={horasCompensar > 0 ? "negative" : "positive"}
+          icon={TimerReset}
         />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-800">
+          <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)] transition-colors">
             Meta semanal × Horas trabalhadas
           </h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={charts.week}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={minutesTick} tick={{ fontSize: 11 }} width={48} />
-                <Tooltip formatter={(v) => formatMinutesLong(Number(v))} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: "var(--text-muted)" }} />
+                <YAxis
+                  tickFormatter={minutesTick}
+                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+                  width={48}
+                />
+                <RechartsTooltip formatter={(v) => formatMinutesLong(Number(v))} />
                 <Legend />
-                <Bar dataKey="meta" name="Meta" fill="#94a3b8" radius={4} />
-                <Bar dataKey="trabalhado" name="Trabalhado" fill="#047857" radius={4} />
+                <Bar dataKey="meta" name="Meta" fill="var(--text-muted)" radius={4} />
+                <Bar dataKey="trabalhado" name="Trabalhado" fill="var(--brand)" radius={4} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
         <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-800">
+          <h2 className="mb-4 text-sm font-semibold text-[color:var(--text)] transition-colors">
             Saldo de banco de horas ao longo do tempo
           </h2>
           <div className="h-64">
             {charts.bankHistory.length === 0 ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-[color:var(--text-muted)]">
                 Sem histórico ainda. Registre batidas para ver a evolução.
               </p>
             ) : (
@@ -153,15 +198,21 @@ export default function DashboardPage() {
                     label: formatDateBR(p.date).slice(0, 5),
                   }))}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={minutesTick} tick={{ fontSize: 11 }} width={48} />
-                  <Tooltip formatter={(v) => formatMinutesLong(Number(v), true)} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} />
+                  <YAxis
+                    tickFormatter={minutesTick}
+                    tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+                    width={48}
+                  />
+                  <RechartsTooltip
+                    formatter={(v) => formatMinutesLong(Number(v), true)}
+                  />
                   <Line
                     type="monotone"
                     dataKey="saldo"
                     name="Saldo"
-                    stroke="#0f766e"
+                    stroke="var(--brand)"
                     strokeWidth={2}
                     dot={false}
                   />

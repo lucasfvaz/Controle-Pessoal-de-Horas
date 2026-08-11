@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button, Card, Input, PageHeader, Select } from "@/components/ui";
+import { Button, Card, EmptyState, Input, PageHeader, Select } from "@/components/ui";
+import { History } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { formatDateBR, formatMinutesLong, getWeekStart, todayDateOnly } from "@/domain/time";
 
 type Entry = {
@@ -17,6 +19,7 @@ type Entry = {
 };
 
 export default function HistoricoPage() {
+  const router = useRouter();
   const today = todayDateOnly();
   const [from, setFrom] = useState(today.slice(0, 8) + "01");
   const [to, setTo] = useState(today);
@@ -123,8 +126,14 @@ export default function HistoricoPage() {
           <tbody>
             {entries.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
-                  Nenhum registro encontrado.
+                <td colSpan={8} className="px-4 py-6">
+                  <EmptyState
+                    icon={History}
+                    title="Nenhum registro encontrado"
+                    description="Ajuste os filtros ou registre um novo ponto."
+                    actionLabel="Registrar ponto"
+                    onAction={() => router.push("/ponto")}
+                  />
                 </td>
               </tr>
             ) : (
