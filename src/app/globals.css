@@ -216,6 +216,15 @@ html.light {
   to { transform: rotate(360deg); }
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
 /* ─── Utility animation classes ─── */
 .animate-fade-in { animation: fadeIn var(--motion-normal) ease both; }
 .animate-slide-up { animation: slideUp var(--motion-normal) ease both; }
@@ -224,6 +233,7 @@ html.light {
 .animate-slide-out-right { animation: slideOutRight var(--motion-fast) ease both; }
 .animate-scale-in { animation: scale-in var(--motion-normal) ease both; }
 .animate-pulse-soft { animation: pulse-soft 1.8s ease-in-out infinite; }
+.animate-shake { animation: shake 0.45s ease both; }
 .animate-shimmer {
   background: linear-gradient(
     90deg,
