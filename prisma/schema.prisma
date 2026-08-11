@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  settings   UserSettings?
+  timeEntries TimeEntry[]
+  classes    ClassSchedule[]
+  holidays   Holiday[]
+  audits     TimeEntryAudit[]
+}
+
+model UserSettings {
+  id                        String  @id @default(cuid())
+  userId                    String  @unique
+  weeklyGoalMinutes         Int     @default(2400)
+  workDays                  String  @default("1,2,3,4,5")
+  defaultEntry              String  @default("08:00")
+  defaultExit               String  @default("17:30")
+  defaultBreakMinutes       Int     @default(60)
+  allowCompensation         Boolean @default(true)
+  maxDailyMinutes           Int     @default(600)
+  suggestionWindowStart     String  @default("07:00")
+  suggestionWindowEnd       String  @default("20:00")
+  bankOpeningBalanceMinutes Int     @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TimeEntry {
+  id                String   @id @default(cuid())
+  userId            String
+  date              String
+  entryTime         String
+  breakStart        String
+  breakEnd          String
+  exitTime          String
+  notes             String?
+  workedMinutes     Int
+  dayBalanceMinutes Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audits TimeEntryAudit[]
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model ClassSchedule {
+  id        String  @id @default(cuid())
+  userId    String
+  name      String
+  weekday   Int
+  startTime String
+  endTime   String
+  startDate String
+  endDate   String
+  notes     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, weekday])
+}
+
+model Holiday {
+  id     String @id @default(cuid())
+  userId String
+  date   String
+  name   String
+  type   String @default("holiday")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model TimeEntryAudit {
+  id          String   @id @default(cuid())
+  timeEntryId String?
+  userId      String
+  action      String
+  before      String?
+  after       String?
+  createdAt   DateTime @default(now())
+
+  timeEntry TimeEntry? @relation(fields: [timeEntryId], references: [id], onDelete: SetNull)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
