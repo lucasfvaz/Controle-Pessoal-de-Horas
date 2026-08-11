@@ -6,10 +6,12 @@ export function Card({
   children,
   className,
   variant = "default",
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
   variant?: "default" | "glass" | "muted";
+  style?: React.CSSProperties;
 }) {
   const variants = {
     default:
@@ -27,6 +29,7 @@ export function Card({
         variants[variant],
         className
       )}
+      style={style}
     >
       {children}
     </div>
