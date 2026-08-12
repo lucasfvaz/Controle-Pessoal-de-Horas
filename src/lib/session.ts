@@ -23,10 +23,18 @@ export async function getUserSettings(userId: string) {
   const settings = await prisma.userSettings.findUnique({
     where: { userId },
   });
-  if (!settings) {
-    return prisma.userSettings.create({
-      data: { userId },
-    });
+  if (settings) return settings;
+
+  // Sessão antiga após reset do DB: userId do JWT não existe mais.
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+  if (!user) {
+    throw new AuthError("Sessão inválida. Faça login novamente.");
   }
-  return settings;
+
+  return prisma.userSettings.create({
+    data: { userId },
+  });
 }
